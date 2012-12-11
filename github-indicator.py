@@ -108,7 +108,7 @@ class GitHubIndicator(object):
             if self.status != st['status']:
                 self.status = st['status']
                 msg = self.api.last_message()
-                self.message = msg['body']
+                self.message = msg['body'] + ' -- ' + msg['created_on']
                 self.set_icon()
                 self.notify_status()
         return True
@@ -119,8 +119,9 @@ class GitHubIndicator(object):
 
     def notify_status(self):
         title = 'GitHub status is %s' % self.status
-        message = '%s:\n%s' % (self.last_updated, self.message)
-        n = pynotify.Notification(title, message)
+        message = '%s\n%s' % (self.last_updated, self.message)
+        icon_file = get_icon_file_path(self.status)
+        n = pynotify.Notification(title, message, icon_file)
         n.show()
 
 
