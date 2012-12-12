@@ -26,7 +26,7 @@ icon_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), 'icons'))
 
 def get_icon_file_path(name):
     path = os.path.join(icon_dir, name + '.png')
-    return os.path.isfile(path) and path or get_icon_file_path('unknown')
+    return path
 
 
 class GitHubAPI(object):
@@ -65,7 +65,8 @@ class GitHubAPI(object):
 
 
 class GitHubApplet(object):
-    def __init__(self):
+    def __init__(self, options):
+        self.options = options
         self.api = GitHubAPI()
         self.status = 'unknown'
         self.last_updated = None
@@ -90,7 +91,9 @@ class GitHubApplet(object):
 
     def main(self):
         gtk.gdk.threads_init()
-        gtk.timeout_add(10 * 1000, self.update_display)
+        if self.options.debug: print('Initial status check.')
+        self.update_display()
+        if self.options.debug: print('Starting gtk main.')
         gtk.main()
 
     def quit_cb(self, *args, **kwargs):
@@ -99,16 +102,23 @@ class GitHubApplet(object):
         raise KeyboardInterrupt
 
     def update_display(self, *args, **kwargs):
+        if self.options.debug: print('Fetching GitHub API Status')
         st = self.api.status()
         if st['last_updated'] != self.last_updated:
             self.last_updated = st['last_updated']
             if self.status != st['status']:
                 self.status = st['status']
+                if self.options.debug: print('\tNew Status: %s.' % (self.status))
                 msg = self.api.last_message()
                 self.message = msg['body'].replace('\n', ' ') + ' -- ' + msg['created_on']
                 self.set_icon()
                 self.notify_status()
-        return True
+            else:
+                if self.options.debug: print('\tStatus unchanged.')
+        else:
+            if self.options.debug: print('\tNothing changed.')
+        gtk.timeout_add(10 * 1000, self.update_display)
+
 
     def notify_status(self):
         title = 'GitHub service status is %s' % self.status
@@ -120,9 +130,10 @@ class GitHubApplet(object):
 
 class GitHubAppIndicator(GitHubApplet):
     def create_indicator(self):
-        ind = appindicator.Indicator("github-indicator",
-                                      get_icon_file_path('unknown'),
-                                      appindicator.CATEGORY_APPLICATION_STATUS)
+        icon_file = get_icon_file_path('unknown')
+        if self.options.debug: print('Creating appindicator with default icon %s' % icon_file)
+        ind = appindicator.Indicator('github-indicator', icon_file,
+                                     appindicator.CATEGORY_APPLICATION_STATUS)
         ind.set_status(appindicator.STATUS_ACTIVE)
         return ind
 
@@ -134,12 +145,14 @@ class GitHubAppIndicator(GitHubApplet):
 
     def set_icon(self):
         icon_file = get_icon_file_path(self.status)
+        if self.options.debug: print('Setting icon from file: %s' % icon_file)
         self.tray.set_icon(icon_file)
 
 
 class GitHubStatusIcon(GitHubApplet):
     def create_indicator(self):
         icon_file = get_icon_file_path(self.status)
+        if self.options.debug: print('Creating StatusIcon from file (%s)' % icon_file)
         return gtk.status_icon_new_from_file(icon_file)
 
     def create_menu(self):
@@ -149,6 +162,7 @@ class GitHubStatusIcon(GitHubApplet):
 
     def set_icon(self):
         icon_file = get_icon_file_path(self.status)
+        if self.options.debug: print('Setting icon from file: %s' % icon_file)
         self.tray.set_from_file(icon_file)
 
     def popup_menu_cb(self, widget, button, time):
@@ -162,14 +176,19 @@ parser = optparse.OptionParser(version="%prog " + '.'.join(map(str, __version__)
 parser.add_option('-s', "--status-icon", action="store_true",
                   dest='status_icon', default=False,
                   help="Use a gtk status icon instead of appindicator")
+parser.add_option('-d', "--debug", action="store_true",
+                  dest='debug', default=False,
+                  help="Prints some debugging info")
 
 if __name__ == '__main__':
     (options, args) = parser.parse_args()
     try:
         if options.status_icon:
-            ghi = GitHubStatusIcon()
+            if options.debug: print('Using StatusIcon version')
+            ghi = GitHubStatusIcon(options)
         else:
-            ghi = GitHubAppIndicator()
+            if options.debug: print('Using AppIndicator version')
+            ghi = GitHubAppIndicator(options)
         ghi.main()
     except KeyboardInterrupt:
         pass
