@@ -12,11 +12,14 @@ License: Do whatever you want
 import appindicator
 import gtk
 import json
+import optparse
 import os
 import pynotify
 import sys
 import urllib2
 
+
+__version__ = (0, 1, 1)
 
 icon_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), 'icons'))
 
@@ -61,25 +64,19 @@ class GitHubAPI(object):
         return data
 
 
-class GitHubIndicator(object):
+class GitHubApplet(object):
     def __init__(self):
-        self.tray = self.create_indicator()
-        self.menu = self.create_menu()
-        self.tray.set_menu(self.menu)
-        self.menu.show_all()
-
         self.api = GitHubAPI()
         self.status = 'unknown'
         self.last_updated = None
 
+        self.tray = self.create_indicator()
+        self.menu = self.create_menu()
+
         pynotify.init('github-indicator')
 
-    def create_indicator(self):
-        ind = appindicator.Indicator("github-indicator",
-                                      get_icon_file_path('unknown'),
-                                      appindicator.CATEGORY_APPLICATION_STATUS)
-        ind.set_status(appindicator.STATUS_ACTIVE)
-        return ind
+    def create_indicator(self): pass
+    def set_icon(self): pass
 
     def create_menu(self):
         menu = gtk.Menu()
@@ -91,15 +88,15 @@ class GitHubIndicator(object):
 
         return menu
 
-    def quit_cb(self, *args, **kwargs):
-        gtk.main_quit()
-        sys.exit()
-        raise KeyboardInterrupt
-
     def main(self):
         gtk.gdk.threads_init()
         gtk.timeout_add(10 * 1000, self.update_display)
         gtk.main()
+
+    def quit_cb(self, *args, **kwargs):
+        gtk.main_quit()
+        sys.exit()
+        raise KeyboardInterrupt
 
     def update_display(self, *args, **kwargs):
         st = self.api.status()
@@ -108,26 +105,71 @@ class GitHubIndicator(object):
             if self.status != st['status']:
                 self.status = st['status']
                 msg = self.api.last_message()
-                self.message = msg['body'] + ' -- ' + msg['created_on']
+                self.message = msg['body'].replace('\n', ' ') + ' -- ' + msg['created_on']
                 self.set_icon()
                 self.notify_status()
         return True
 
-    def set_icon(self):
-        icon_file = get_icon_file_path(self.status)
-        self.tray.set_icon(icon_file)
-
     def notify_status(self):
-        title = 'GitHub status is %s' % self.status
+        title = 'GitHub service status is %s' % self.status
         message = '%s\n%s' % (self.last_updated, self.message)
         icon_file = get_icon_file_path(self.status)
         n = pynotify.Notification(title, message, icon_file)
         n.show()
 
 
+class GitHubAppIndicator(GitHubApplet):
+    def create_indicator(self):
+        ind = appindicator.Indicator("github-indicator",
+                                      get_icon_file_path('unknown'),
+                                      appindicator.CATEGORY_APPLICATION_STATUS)
+        ind.set_status(appindicator.STATUS_ACTIVE)
+        return ind
+
+    def create_menu(self):
+        menu = super(GitHubAppIndicator, self).create_menu()
+        self.tray.set_menu(menu)
+        menu.show_all()
+        return menu
+
+    def set_icon(self):
+        icon_file = get_icon_file_path(self.status)
+        self.tray.set_icon(icon_file)
+
+
+class GitHubStatusIcon(GitHubApplet):
+    def create_indicator(self):
+        icon_file = get_icon_file_path(self.status)
+        return gtk.status_icon_new_from_file(icon_file)
+
+    def create_menu(self):
+        menu = super(GitHubStatusIcon, self).create_menu()
+        self.tray.connect('popup-menu', self.popup_menu_cb)
+        return menu
+
+    def set_icon(self):
+        icon_file = get_icon_file_path(self.status)
+        self.tray.set_from_file(icon_file)
+
+    def popup_menu_cb(self, widget, button, time):
+        if button == 3:
+            self.menu.show_all()
+            self.menu.popup(None, None, None, 3, time)
+
+
+
+parser = optparse.OptionParser(version="%prog " + '.'.join(map(str, __version__)))
+parser.add_option('-s', "--status-icon", action="store_true",
+                  dest='status_icon', default=False,
+                  help="Use a gtk status icon instead of appindicator")
+
 if __name__ == '__main__':
+    (options, args) = parser.parse_args()
     try:
-        ghi = GitHubIndicator()
+        if options.status_icon:
+            ghi = GitHubStatusIcon()
+        else:
+            ghi = GitHubAppIndicator()
         ghi.main()
     except KeyboardInterrupt:
         pass
