@@ -153,7 +153,9 @@ class GitHubStatusIcon(GitHubApplet):
     def create_indicator(self):
         icon_file = get_icon_file_path(self.status)
         if self.options.debug: print('Creating StatusIcon from file (%s)' % icon_file)
-        return gtk.status_icon_new_from_file(icon_file)
+        icon = gtk.status_icon_new_from_file(icon_file)
+        if self.options.debug and not icon.is_embedded(): print('\tCouldn\'t find a notification area')
+        return icon
 
     def create_menu(self):
         menu = super(GitHubStatusIcon, self).create_menu()
@@ -171,7 +173,6 @@ class GitHubStatusIcon(GitHubApplet):
             self.menu.popup(None, None, None, 3, time)
 
 
-
 parser = optparse.OptionParser(version="%prog " + '.'.join(map(str, __version__)))
 parser.add_option('-s', "--status-icon", action="store_true",
                   dest='status_icon', default=False,
@@ -179,6 +180,7 @@ parser.add_option('-s', "--status-icon", action="store_true",
 parser.add_option('-d', "--debug", action="store_true",
                   dest='debug', default=False,
                   help="Prints some debugging info")
+
 
 if __name__ == '__main__':
     (options, args) = parser.parse_args()
