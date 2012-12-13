@@ -1,9 +1,13 @@
 github-indicator
 ================
 
-An indicator applet that reports github status
+An indicator applet that reports github status, and show some notifications.
 
-So far it only shows an icon in the indicator tray, changing colors and pushing
-a notificacion if the GitHub service status changes.
+If started with -u and -p arguments (username and password), the app will try
+to access your user's suscribed events and show them as notifications. So far
+the password is not stored anyway and could be seen from a 'ps', so it's not
+secure to use it in shared environments.
 
 
+
+Hey, we also have a freenode channel: #github-indicator, feel free to join!
