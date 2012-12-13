@@ -34,8 +34,12 @@ class GitHubAPI(object):
         self.status_api = self._geturl('https://status.github.com/api.json')
         self.user_api = None
         if username and password:
-            self._basic_authentication('https://api.github.com', username, password)
-            self.user_api = self._geturl('https://api.github.com/users/%s' % username)
+            url = 'https://api.github.com/users/%s' % username
+            try:
+                self._basic_authentication(url, username, password)
+                self.user_api = self._geturl(url)
+            except Exception:
+                pass
 
     def status(self):
         try:
@@ -63,6 +67,8 @@ class GitHubAPI(object):
         return data
 
     def received_events(self):
+        if self.user_api is None:
+            return []
         data = self._geturl(self.user_api['received_events_url'])
         return data
 
