@@ -117,7 +117,7 @@ class GitHubApplet(object):
                 if self.options.debug: print('\tStatus unchanged.')
         else:
             if self.options.debug: print('\tNothing changed.')
-        gtk.timeout_add(10 * 1000, self.update_display)
+        gtk.timeout_add(self.options.update_time * 1000, self.update_display)
 
 
     def notify_status(self):
@@ -180,6 +180,10 @@ parser.add_option('-s', "--status-icon", action="store_true",
 parser.add_option('-d', "--debug", action="store_true",
                   dest='debug', default=False,
                   help="Prints some debugging info")
+parser.add_option('-t', "--update-time", action="store",
+                  dest='update_time', default=10, type="int",
+                  help="Checks for status updates after the specified amount of time [in seconds].")
+
 
 
 if __name__ == '__main__':
