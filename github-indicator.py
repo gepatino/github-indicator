@@ -30,12 +30,16 @@ def get_icon_file_path(name):
 
 
 class GitHubAPI(object):
-    def __init__(self, apiurl='https://status.github.com/api.json'):
-        self.api = self._geturl(apiurl)
+    def __init__(self, username=None, password=None):
+        self.status_api = self._geturl('https://status.github.com/api.json')
+        self.user_api = None
+        if username and password:
+            self._basic_authentication('https://api.github.com', username, password)
+            self.user_api = self._geturl('https://api.github.com/users/%s' % username)
 
     def status(self):
         try:
-            data = self._geturl(self.api['status_url'])
+            data = self._geturl(self.status_api['status_url'])
         except (urllib2.URLError, TypeError, ValueError):
             data = {
                 'status': 'unknown',
@@ -43,9 +47,9 @@ class GitHubAPI(object):
             }
         return data
 
-    def last_message(self):
+    def status_last_message(self):
         try:
-            data = self._geturl(self.api['last_message_url'])
+            data = self._geturl(self.status_api['last_message_url'])
         except (urllib2.URLError, TypeError, ValueError):
             data = {
                 'status': 'unknown',
@@ -54,9 +58,18 @@ class GitHubAPI(object):
             }
         return data
 
-    def messages(self):
-        data = self._geturl(self.api['messages_url'])
+    def status_messages(self):
+        data = self._geturl(self.status_api['messages_url'])
         return data
+
+    def received_events(self):
+        data = self._geturl(self.user_api['received_events_url'])
+        return data
+
+    def _basic_authentication(self, url, username, password):
+        passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        passman.add_password(None, url, username, password)
+        urllib2.install_opener(urllib2.build_opener(urllib2.HTTPBasicAuthHandler(passman)))
 
     def _geturl(self, url):
         data = urllib2.urlopen(url)
@@ -67,12 +80,13 @@ class GitHubAPI(object):
 class GitHubApplet(object):
     def __init__(self, options):
         self.options = options
-        self.api = GitHubAPI()
+        self.api = GitHubAPI(options.username, options.password)
         self.status = 'unknown'
         self.last_updated = None
 
         self.tray = self.create_indicator()
         self.menu = self.create_menu()
+        self.past_events = []
 
         pynotify.init('github-indicator')
 
@@ -102,6 +116,11 @@ class GitHubApplet(object):
         raise KeyboardInterrupt
 
     def update_display(self, *args, **kwargs):
+        self._check_status()
+        self._check_events()
+        gtk.timeout_add(20 * 1000, self.update_display)
+
+    def _check_status(self):
         if self.options.debug: print('Fetching GitHub API Status')
         st = self.api.status()
         if st['last_updated'] != self.last_updated:
@@ -109,7 +128,7 @@ class GitHubApplet(object):
             if self.status != st['status']:
                 self.status = st['status']
                 if self.options.debug: print('\tNew Status: %s.' % (self.status))
-                msg = self.api.last_message()
+                msg = self.api.status_last_message()
                 self.message = msg['body'].replace('\n', ' ') + ' -- ' + msg['created_on']
                 self.set_icon()
                 self.notify_status()
@@ -117,14 +136,26 @@ class GitHubApplet(object):
                 if self.options.debug: print('\tStatus unchanged.')
         else:
             if self.options.debug: print('\tNothing changed.')
-        gtk.timeout_add(10 * 1000, self.update_display)
 
+    def _check_events(self):
+        if self.options.debug: print('Fetching users events')
+        events = self.api.received_events()
+        for e in (x for x in reversed(events) if x['id'] not in self.past_events):
+            self.past_events.append(e['id'])
+            title = '%s - %s' % (e['created_at'], e['type'])
+            message = '%s on %s' % (e['actor']['login'], e['repo']['name'])
+            icon = e['actor']['avatar_url']
+            self.notify(title, message, icon)
 
     def notify_status(self):
         title = 'GitHub service status is %s' % self.status
         message = '%s\n%s' % (self.last_updated, self.message)
         icon_file = get_icon_file_path(self.status)
-        n = pynotify.Notification(title, message, icon_file)
+        self.notify(title, message, icon_file)
+
+    def notify(self, title, message, icon):
+        if self.options.debug: print(title)
+        n = pynotify.Notification(title, message, icon)
         n.show()
 
 
@@ -173,13 +204,19 @@ class GitHubStatusIcon(GitHubApplet):
             self.menu.popup(None, None, None, 3, time)
 
 
-parser = optparse.OptionParser(version="%prog " + '.'.join(map(str, __version__)))
-parser.add_option('-s', "--status-icon", action="store_true",
-                  dest='status_icon', default=False,
-                  help="Use a gtk status icon instead of appindicator")
-parser.add_option('-d', "--debug", action="store_true",
+parser = optparse.OptionParser(version='%prog ' + '.'.join(map(str, __version__)))
+parser.add_option('-d', '--debug', action='store_true',
                   dest='debug', default=False,
-                  help="Prints some debugging info")
+                  help='Prints some debugging info')
+parser.add_option('-s', '--status-icon', action='store_true',
+                  dest='status_icon', default=False,
+                  help='Use a gtk status icon instead of appindicator')
+parser.add_option('-u', '--username', action='store',
+                  dest='username', default=None,
+                  help='GitHub username')
+parser.add_option('-p', '--password', action='store',
+                  dest='password', default=None,
+                  help='GitHub password (won\'t be saved)')
 
 
 if __name__ == '__main__':
