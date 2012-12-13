@@ -143,6 +143,8 @@ class GitHubApplet(object):
         else:
             if self.options.debug: print('\tNothing changed.')
 
+        gtk.timeout_add(self.options.update_time * 1000, self.update_display)
+
     def _check_events(self):
         if self.options.debug: print('Fetching users events')
         events = self.api.received_events()
@@ -223,6 +225,9 @@ parser.add_option('-u', '--username', action='store',
 parser.add_option('-p', '--password', action='store',
                   dest='password', default=None,
                   help='GitHub password (won\'t be saved)')
+parser.add_option('-t', '--update-time', action='store',
+                  dest='update_time', default=10, type='int',
+                  help='Checks for status updates after the specified amount of time [in seconds].')
 
 
 if __name__ == '__main__':
