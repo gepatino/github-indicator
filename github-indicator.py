@@ -226,7 +226,7 @@ parser.add_option('-p', '--password', action='store',
                   dest='password', default=None,
                   help='GitHub password (won\'t be saved)')
 parser.add_option('-t', '--update-time', action='store',
-                  dest='update_time', default=10, type='int',
+                  dest='update_time', default=60, type='int',
                   help='Checks for status updates after the specified amount of time [in seconds].')
 
 
