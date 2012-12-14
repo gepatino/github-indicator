@@ -129,7 +129,7 @@ class GitHubApplet(object):
     def update_display(self, *args, **kwargs):
         self._check_status()
         self._check_events()
-        gtk.timeout_add(20 * 1000, self.update_display)
+        gtk.timeout_add(self.options.update_time * 1000, self.update_display)
 
     def notify_status(self):
         title = 'GitHub service status is %s' % self.status
@@ -159,8 +159,6 @@ class GitHubApplet(object):
         else:
             if self.options.debug: print('\tNothing changed.')
 
-        gtk.timeout_add(self.options.update_time * 1000, self.update_display)
-
     def _check_events(self):
         if self.options.debug: print('Fetching users events')
         events = self.api.received_events()
@@ -168,7 +166,7 @@ class GitHubApplet(object):
             self.past_events.append(e['id'])
             title = '%s - %s' % (e['created_at'], e['type'])
             message = '%s on %s' % (e['actor']['login'], e['repo']['name'])
-            icon = e['actor']['avatar_url']
+            icon = self._get_user_icon(e['actor'])
             self.notify(title, message, icon)
 
     def _get_user_icon(self, user):
