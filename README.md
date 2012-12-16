@@ -17,4 +17,6 @@ Run setup.py and optionally specify your app prefix:
 ./setup.py install -prefix ~/local
 
 
+IRC Channel
+-----------
 Hey, we also have a freenode channel: #github-indicator, feel free to join!
