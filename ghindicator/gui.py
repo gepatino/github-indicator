@@ -11,22 +11,14 @@ License: Do whatever you want
 
 import appindicator
 import gtk
-import optparse
 import os
 import pynotify
 import sys
 import urllib2
 
 from ghindicator.api import GitHubAPI
-
-
-__version__ = (0, 1, 2)
-
-ICON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), 'icons'))
-WORKING_DIR = os.path.realpath(os.path.join(os.path.expanduser('~'), '.github-indicator'))
-CACHE_DIR = os.path.realpath(os.path.join(WORKING_DIR, 'cache'))
-
-
+from ghindicator.options import ICON_DIR
+from ghindicator.options import CACHE_DIR
 
 
 def get_icon_file_path(name):
@@ -48,6 +40,7 @@ class GitHubApplet(object):
         pynotify.init('github-indicator')
 
     def create_indicator(self): pass
+
     def set_icon(self): pass
 
     def create_menu(self):
@@ -84,7 +77,7 @@ class GitHubApplet(object):
         self.notify(title, message, icon_file)
 
     def notify(self, title, message, icon):
-        if self.options.debug: print('%s - %s' % (title, message.replace('\n', ' '))) 
+        if self.options.debug: print('%s - %s' % (title, message.replace('\n', ' ')))
         n = pynotify.Notification(title, message, icon)
         n.show()
 
