@@ -19,19 +19,24 @@ import sys
 import urllib2
 
 
-__version__ = (0, 1, 1)
+__version__ = (0, 1, 2)
 
-icon_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), 'icons'))
+ICON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), 'icons'))
+WORKING_DIR = os.path.realpath(os.path.join(os.path.expanduser('~'), '.github-indicator'))
+CACHE_DIR = os.path.realpath(os.path.join(WORKING_DIR, 'cache'))
+
+
 
 
 def get_icon_file_path(name):
-    path = os.path.join(icon_dir, name + '.png')
+    path = os.path.join(ICON_DIR, name + '.png')
     return path
 
 
 class GitHubAPI(object):
     def __init__(self, username=None, password=None):
         self.status_api = self._geturl('https://status.github.com/api.json')
+        self.cache = {}
         self.user_api = None
         if username and password:
             url = 'https://api.github.com/users/%s' % username
@@ -124,7 +129,18 @@ class GitHubApplet(object):
     def update_display(self, *args, **kwargs):
         self._check_status()
         self._check_events()
-        gtk.timeout_add(20 * 1000, self.update_display)
+        gtk.timeout_add(self.options.update_time * 1000, self.update_display)
+
+    def notify_status(self):
+        title = 'GitHub service status is %s' % self.status
+        message = '%s\n%s' % (self.last_updated, self.message)
+        icon_file = get_icon_file_path(self.status)
+        self.notify(title, message, icon_file)
+
+    def notify(self, title, message, icon):
+        if self.options.debug: print('%s - %s' % (title, message.replace('\n', ' '))) 
+        n = pynotify.Notification(title, message, icon)
+        n.show()
 
     def _check_status(self):
         if self.options.debug: print('Fetching GitHub API Status')
@@ -143,28 +159,29 @@ class GitHubApplet(object):
         else:
             if self.options.debug: print('\tNothing changed.')
 
-        gtk.timeout_add(self.options.update_time * 1000, self.update_display)
-
     def _check_events(self):
         if self.options.debug: print('Fetching users events')
         events = self.api.received_events()
-        for e in (x for x in reversed(events) if x['id'] not in self.past_events):
+        if self.options.debug: print '\t%s events found.' % len(events)
+        events = [x for x in reversed(events) if x['id'] not in self.past_events]
+        if self.options.debug: print '\t%s new events.' % len(events)
+        for e in events:
             self.past_events.append(e['id'])
             title = '%s - %s' % (e['created_at'], e['type'])
             message = '%s on %s' % (e['actor']['login'], e['repo']['name'])
-            icon = e['actor']['avatar_url']
+            icon = self._get_user_icon(e['actor'])
             self.notify(title, message, icon)
 
-    def notify_status(self):
-        title = 'GitHub service status is %s' % self.status
-        message = '%s\n%s' % (self.last_updated, self.message)
-        icon_file = get_icon_file_path(self.status)
-        self.notify(title, message, icon_file)
-
-    def notify(self, title, message, icon):
-        if self.options.debug: print(title)
-        n = pynotify.Notification(title, message, icon)
-        n.show()
+    def _get_user_icon(self, user):
+        icon = os.path.join(CACHE_DIR, user['login'] + '.png')
+        if not os.path.isfile(icon):
+            try:
+                res = urllib2.urlopen(user['avatar_url'])
+                with open(icon, 'wb') as f:
+                    f.write(res.read())
+            except Exception:
+                icon = None
+        return icon
 
 
 class GitHubAppIndicator(GitHubApplet):
@@ -232,6 +249,9 @@ parser.add_option('-t', '--update-time', action='store',
 
 if __name__ == '__main__':
     (options, args) = parser.parse_args()
+    for d in (WORKING_DIR, CACHE_DIR):
+        if not os.path.exists(d):
+            os.makedirs(d)
     try:
         if options.status_icon:
             if options.debug: print('Using StatusIcon version')
