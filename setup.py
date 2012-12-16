@@ -2,8 +2,6 @@
 #-*- coding:utf-8 -*-
 
 #
-# Copyright 2011 gepatino
-#
 # Author: Gabriel Patiño <gepatino@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify it

@@ -9,5 +9,12 @@ the password is not stored anyway and could be seen from a 'ps', so it's not
 secure to use it in shared environments.
 
 
+Install
+-------
+
+Run setup.py and optionally specify your app prefix:
+
+./setup.py install -prefix ~/local
+
 
 Hey, we also have a freenode channel: #github-indicator, feel free to join!
