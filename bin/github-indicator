@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+#-*- coding:utf-8 -*-
+
+import sys
+import os
+
+# this will be replaced at install time
+INSTALLED_BASE_DIR = "@ INSTALLED_BASE_DIR @"
+
+# get the replaced-at-install-time name if exists, or the project one
+if os.path.exists(INSTALLED_BASE_DIR):
+    project_basedir = INSTALLED_BASE_DIR
+else:
+    project_basedir = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0]))))
+
+if project_basedir not in sys.path:
+    sys.path.insert(0, project_basedir)
+
+from ghindicator import main
+
+main.run()
