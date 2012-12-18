@@ -82,7 +82,7 @@ class CustomInstall(install):
 
 setup(
     name = 'github-indicator',
-    version = '0.0.1',
+    version = '0.0.2',
     license = 'GPL-3',
     author = 'Gabriel Patiño',
     author_email = 'gepatino@gmail.com',
