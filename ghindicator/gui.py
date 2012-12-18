@@ -36,7 +36,7 @@ class GitHubApplet(object):
 
     def create_indicator(self): pass
 
-    def set_icon(self): pass
+    def set_icon(self, icon): pass
 
     def create_menu(self):
         menu = gtk.Menu()
@@ -49,10 +49,7 @@ class GitHubApplet(object):
         return menu
 
     def main(self):
-        gtk.gdk.threads_init()
-        if self.options.debug: print('Initial status check.')
-        self.update_display()
-        if self.options.debug: print('Starting gtk main.')
+        gtk.timeout_add(500, self.update_display)
         gtk.main()
 
     def quit_cb(self, *args, **kwargs):
@@ -66,6 +63,7 @@ class GitHubApplet(object):
             title = 'GitHub service status is %s' % status['message']['status']
             message = '%s\n%s' % (status['message']['created_on'], status['message']['body'])
             icon = get_icon_file_path(status['message']['status'])
+            self.set_icon(icon)
             self.notify(title, message, icon)
 
         events = self.monitor.check_events()
@@ -98,10 +96,9 @@ class GitHubAppIndicator(GitHubApplet):
         menu.show_all()
         return menu
 
-    def set_icon(self):
-        icon_file = get_icon_file_path(self.status)
-        if self.options.debug: print('Setting icon from file: %s' % icon_file)
-        self.tray.set_icon(icon_file)
+    def set_icon(self, icon):
+        if self.options.debug: print('Setting icon from file: %s' % icon)
+        self.tray.set_icon(icon)
 
 
 class GitHubStatusIcon(GitHubApplet):
@@ -117,10 +114,9 @@ class GitHubStatusIcon(GitHubApplet):
         self.tray.connect('popup-menu', self.popup_menu_cb)
         return menu
 
-    def set_icon(self):
-        icon_file = get_icon_file_path(self.status)
-        if self.options.debug: print('Setting icon from file: %s' % icon_file)
-        self.tray.set_from_file(icon_file)
+    def set_icon(self, icon):
+        if self.options.debug: print('Setting icon from file: %s' % icon)
+        self.tray.set_from_file(icon)
 
     def popup_menu_cb(self, widget, button, time):
         if button == 3:
