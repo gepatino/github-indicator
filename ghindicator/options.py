@@ -11,8 +11,6 @@ import optparse
 import os
 
 
-__version__ = (0, 0, 2)
-
 ICON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), 'icons'))
 WORKING_DIR = os.path.realpath(os.path.join(os.path.expanduser('~'), '.github-indicator'))
 CACHE_DIR = os.path.realpath(os.path.join(WORKING_DIR, 'cache'))
