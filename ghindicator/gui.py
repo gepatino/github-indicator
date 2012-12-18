@@ -69,7 +69,7 @@ class GitHubApplet(object):
             self.notify(title, message, icon)
 
         events = self.monitor.check_events()
-        for e in events:
+        for e in reversed(events):
             title = '%s - %s' % (e['created_at'], e['type'])
             message = '%s on %s' % (e['actor']['login'], e['repo']['name'])
             icon = self.monitor.get_user_icon(e['actor'])
