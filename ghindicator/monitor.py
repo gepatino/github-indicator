@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Class that serves as a GitHub monitor, abstracting the API with some high level methods.
+Class that abstracts the GitHub API with some high level methods.
 
 Author: Gabriel Patiño <gepatino@gmail.com>
 License: Do whatever you want
@@ -14,22 +14,18 @@ from ghindicator.options import CACHE_DIR
 
 class GitHubMonitor(object):
     def __init__(self, username=None, password=None):
+        self.api = GitHubAPI(username, password)
         self.last_updated = None
         self.status = None
-        self.message = ''
         self.past_events = []
-        self.username = username
-        self.password = password
-        self.api = GitHubAPI(self.username, self.password)
 
     def check_status(self):
         st = self.api.status()
-        if st['last_updated'] != self.last_updated:
+        if self.last_updated != st['last_updated']:
             self.last_updated = st['last_updated']
             if self.status != st['status']:
                 self.status = st['status']
                 msg = self.api.status_last_message()
-                self.message = msg['body'].replace('\n', ' ') + ' -- ' + msg['created_on']
                 return {'status': st, 'message': msg}
 
     def check_events(self):
