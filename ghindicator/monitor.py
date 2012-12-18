@@ -20,12 +20,25 @@ class GitHubMonitor(object):
         self.past_events = []
 
     def check_status(self):
-        st = self.api.status()
+        try:
+            st = self.api.status()
+        except (urllib2.URLError, TypeError, ValueError):
+            st = {
+                'status': 'unknown',
+                'last_updated': 'unknown'
+            }
         if self.last_updated != st['last_updated']:
             self.last_updated = st['last_updated']
             if self.status != st['status']:
                 self.status = st['status']
-                msg = self.api.status_last_message()
+                try:
+                    msg = self.api.status_last_message()
+                except (urllib2.URLError, TypeError, ValueError):
+                    msg = {
+                        'status': 'unknown',
+                        'body': 'Cannot access GitHub API',
+                        'created_on': 'unknown'
+                    }
                 return {'status': st, 'message': msg}
 
     def check_events(self):

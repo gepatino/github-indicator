@@ -28,24 +28,11 @@ class GitHubAPI(object):
                 pass
 
     def status(self):
-        try:
-            data = self._geturl(self.status_api['status_url'])
-        except (urllib2.URLError, TypeError, ValueError):
-            data = {
-                'status': 'unknown',
-                'last_updated': 'unknown'
-            }
+        data = self._geturl(self.status_api['status_url'])
         return data
 
     def status_last_message(self):
-        try:
-            data = self._geturl(self.status_api['last_message_url'])
-        except (urllib2.URLError, TypeError, ValueError):
-            data = {
-                'status': 'unknown',
-                'body': 'Cannot access GitHub API',
-                'created_on': 'unknown'
-            }
+        data = self._geturl(self.status_api['last_message_url'])
         return data
 
     def status_messages(self):
