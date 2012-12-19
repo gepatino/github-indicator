@@ -14,11 +14,20 @@ import xdg.BaseDirectory
 
 __version__ = (0, 0, 3)
 
+# Hack to fix a missing function in my version of xdg
+if not hasattr(xdg.BaseDirectory, 'save_cache_path'):
+    def save_cache_path(resource):
+        path = os.path.join('/', xdg.BaseDirectory.xdg_cache_home, resource)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return path
+    xdg.BaseDirectory.save_cache_path = save_cache_path
+
 ICON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), 'icons'))
 
 DATA_DIR = xdg.BaseDirectory.save_data_path('github-indicator')
-CACHE_DIR = xdg.BaseDirectory.save_cache_path('github-indicator')
 CONFIG_DIR = xdg.BaseDirectory.save_config_path('github-indicator')
+CACHE_DIR = xdg.BaseDirectory.save_cache_path('github-indicator')
 
 
 parser = optparse.OptionParser(version='%prog ' + '.'.join(map(str, __version__)))

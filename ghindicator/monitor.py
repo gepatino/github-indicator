@@ -8,6 +8,7 @@ License: Do whatever you want
 
 import datetime
 import os
+import urllib2
 
 from ghindicator.api import GitHubAPI
 from ghindicator.options import CACHE_DIR
