@@ -10,7 +10,6 @@ import datetime
 import os
 
 from ghindicator.api import GitHubAPI
-from ghindicator.options import WORKING_DIR
 from ghindicator.options import CACHE_DIR
 
 
@@ -71,7 +70,7 @@ class GitHubMonitor(object):
         return icon
 
     def _get_last_notified_event(self):
-        fname = os.path.join(WORKING_DIR, 'last_notified_event')
+        fname = os.path.join(CACHE_DIR, 'last_notified_event')
         try:
             with open(fname, 'r') as f:
                 l = f.read()
@@ -81,6 +80,6 @@ class GitHubMonitor(object):
             return None
 
     def _set_last_notified_event(self, value):
-        fname = os.path.join(WORKING_DIR, 'last_notified_event')
+        fname = os.path.join(CACHE_DIR, 'last_notified_event')
         with open(fname, 'w') as f:
             f.write(value)

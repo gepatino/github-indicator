@@ -10,9 +10,6 @@ import json
 import os
 import urllib2
 
-from ghindicator.options import ICON_DIR
-from ghindicator.options import WORKING_DIR
-
 
 class GitHubAPI(object):
     def __init__(self, username=None, password=None):

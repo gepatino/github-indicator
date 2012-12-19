@@ -9,13 +9,16 @@ License: Do whatever you want
 
 import optparse
 import os
+import xdg.BaseDirectory
 
 
 __version__ = (0, 0, 3)
 
 ICON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), 'icons'))
-WORKING_DIR = os.path.realpath(os.path.join(os.path.expanduser('~'), '.github-indicator'))
-CACHE_DIR = os.path.realpath(os.path.join(WORKING_DIR, 'cache'))
+
+DATA_DIR = xdg.BaseDirectory.save_data_path('github-indicator')
+CACHE_DIR = xdg.BaseDirectory.save_cache_path('github-indicator')
+CONFIG_DIR = xdg.BaseDirectory.save_config_path('github-indicator')
 
 
 parser = optparse.OptionParser(version='%prog ' + '.'.join(map(str, __version__)))
