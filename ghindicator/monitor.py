@@ -60,7 +60,10 @@ class GitHubMonitor(object):
         return events
 
     def get_user_icon(self, user):
-        icon = os.path.join(CACHE_DIR, user['login'] + '.png')
+        avatars_dir = os.path.join(CACHE_DIR, 'avatars')
+        if not os.path.isdir(avatars_dir):
+            os.makedirs(avatars_dir)
+        icon = os.path.join(avatars_dir, user['login'] + '.png')
         if not os.path.isfile(icon):
             try:
                 res = urllib2.urlopen(user['avatar_url'])
