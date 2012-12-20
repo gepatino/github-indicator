@@ -31,9 +31,6 @@ CACHE_DIR = xdg.BaseDirectory.save_cache_path('github-indicator')
 
 
 parser = optparse.OptionParser(version='%prog ' + '.'.join(map(str, __version__)))
-parser.add_option('-d', '--debug', action='store_true',
-                  dest='debug', default=False,
-                  help='Prints some debugging info')
 parser.add_option('-s', '--status-icon', action='store_true',
                   dest='status_icon', default=False,
                   help='Use a gtk status icon instead of appindicator')
@@ -46,6 +43,9 @@ parser.add_option('-p', '--password', action='store',
 parser.add_option('-t', '--update-time', action='store',
                   dest='update_time', default=60, type='int',
                   help='Checks for status updates after the specified amount of time [in seconds].')
+parser.add_option('-l', '--log-level', action='store',
+                  dest='log_level', default='NOTSET',
+                  help='Sets logging level to one of [debug|info|warning|error|fatal]')
 
 
 def get_options():

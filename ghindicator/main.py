@@ -9,14 +9,19 @@ License: Do whatever you want
 
 import os
 
-from ghindicator.options import get_options
-from ghindicator.gui import get_app
+from ghindicator import options
+from ghindicator import gui
+from ghindicator import log
 
 
 def run():
-    (options, args) = get_options()
+    (opts, args) = options.get_options()
+    logfile = os.path.join(options.CACHE_DIR, 'github-indicator.log')
+    log.setup('github-indicator', log_level=opts.log_level, 
+              log_type='file', file_name=logfile)
+
     try:
-        app = get_app(options)
+        app = gui.get_app(opts)
         app.main()
     except KeyboardInterrupt:
         pass
