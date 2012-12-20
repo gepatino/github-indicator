@@ -46,7 +46,7 @@ parser.add_option('-t', '--update-time', action='store',
                   dest='update_time', default=60, type='int',
                   help='Checks for status updates after the specified amount of time [in seconds].')
 parser.add_option('-l', '--log-level', action='store',
-                  dest='log_level', default='NOTSET',
+                  dest='log_level', default='error',
                   help='Sets logging level to one of [debug|info|warning|error|critical]')
 
 
