@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Logging setup
-
-"""
+"""Logging setup"""
 
 import logging
 import logging.handlers
@@ -13,12 +11,13 @@ except ImportError:
     codecs = None
 
 
-LEVELS = {'debug': logging.DEBUG,
-          'info': logging.INFO,
-          'warning': logging.WARNING,
-          'error': logging.ERROR,
-          'critical': logging.CRITICAL,
-          'none': None}
+LEVELS = {
+    'debug': logging.DEBUG,
+    'info': logging.INFO,
+    'warning': logging.WARNING,
+    'error': logging.ERROR,
+    'critical': logging.CRITICAL,
+    }
 
 
 class Formatter(logging.Formatter):
@@ -32,17 +31,15 @@ class Formatter(logging.Formatter):
         return msg
 
 
-def setup(appname, log_type=None, log_level=None, console_level=None,
-            file_name=None, file_max_size=1e6, file_backups=10,
-            syslog_address=None, syslog_port=None, syslog_facility=None):
+def setup(appname, log_type=None, log_level=None,
+          file_name=None, file_max_size=1e6, file_backups=10,
+          syslog_address=None, syslog_port=None, syslog_facility=None):
     """Function to setup the logging according to the received options"""
 
     if log_type is None:
         # Disable logging
         logging.disable(logging.CRITICAL)
         return
-
-    fmt = str(appname) + '[%(process)d]: %(message)s'
 
     if log_type == 'syslog':
         kwargs = {}
@@ -57,7 +54,6 @@ def setup(appname, log_type=None, log_level=None, console_level=None,
     elif log_type == 'file':
         if not file_name:
             file_name = '/tmp/%s.log' % appname
-        fmt = '%(asctime)s ' + fmt
         hdlr = logging.handlers.RotatingFileHandler(file_name, 'a', 
                                                     file_max_size, 
                                                     file_backups)
@@ -66,19 +62,13 @@ def setup(appname, log_type=None, log_level=None, console_level=None,
         hdlr = None
 
     if hdlr is not None:
-        logger = logging.getLogger()
-        logger.setLevel(logging.NOTSET)
-
-        ### Console
-        ##lvl_cons = LEVELS.get(console_level, logging.NOTSET)
-        ##if lvl_cons is None:
-        ##    logger.handlers = []
-        ##else:
-        ##    logger.handlers[0].setLevel(lvl_cons)
-
-        # Syslog / File
+        fmt = '%(asctime)s %(name)s[%(process)d]: %(levelname)-8s %(message)s'
         formtr = Formatter(fmt)
         hdlr.setFormatter(formtr)
-        lvl = LEVELS.get(log_level, logging.NOTSET)
-        hdlr.setLevel(lvl)
+        logger = logging.getLogger(appname)
+        logger.setLevel(LEVELS.get(log_level, logging.NOTSET))
         logger.addHandler(hdlr)
+
+
+def shutdown():
+    logging.shutdown()

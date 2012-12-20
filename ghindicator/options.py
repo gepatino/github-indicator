@@ -23,11 +23,13 @@ if not hasattr(xdg.BaseDirectory, 'save_cache_path'):
         return path
     xdg.BaseDirectory.save_cache_path = save_cache_path
 
+
+APPNAME = 'github-indicator'
 ICON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), 'icons'))
 
-DATA_DIR = xdg.BaseDirectory.save_data_path('github-indicator')
-CONFIG_DIR = xdg.BaseDirectory.save_config_path('github-indicator')
-CACHE_DIR = xdg.BaseDirectory.save_cache_path('github-indicator')
+DATA_DIR = xdg.BaseDirectory.save_data_path(APPNAME)
+CONFIG_DIR = xdg.BaseDirectory.save_config_path(APPNAME)
+CACHE_DIR = xdg.BaseDirectory.save_cache_path(APPNAME)
 
 
 parser = optparse.OptionParser(version='%prog ' + '.'.join(map(str, __version__)))
@@ -45,7 +47,7 @@ parser.add_option('-t', '--update-time', action='store',
                   help='Checks for status updates after the specified amount of time [in seconds].')
 parser.add_option('-l', '--log-level', action='store',
                   dest='log_level', default='NOTSET',
-                  help='Sets logging level to one of [debug|info|warning|error|fatal]')
+                  help='Sets logging level to one of [debug|info|warning|error|critical]')
 
 
 def get_options():

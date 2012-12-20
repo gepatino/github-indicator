@@ -7,9 +7,6 @@ Author: Gabriel Patiño <gepatino@gmail.com>
 License: Do whatever you want
 """
 
-import logging
-#logger = logging.getLogger('github-indicator')
-
 import appindicator
 import gtk
 import os
@@ -18,6 +15,10 @@ import sys
 
 from ghindicator.monitor import GitHubMonitor
 from ghindicator.options import ICON_DIR
+from ghindicator.options import APPNAME
+
+import logging
+logger = logging.getLogger(APPNAME)
 
 
 
@@ -36,7 +37,7 @@ class GitHubApplet(object):
         self.menu = self.create_menu()
         self.past_events = []
 
-        pynotify.init('github-indicator')
+        pynotify.init(APPNAME)
 
     def create_indicator(self): pass
 
@@ -80,7 +81,7 @@ class GitHubApplet(object):
         gtk.timeout_add(self.options.update_time * 1000, self.update_display)
 
     def notify(self, title, message, icon):
-        logging.debug('%s - %s' % (title, message.replace('\n', ' ')))
+        logger.debug('%s - %s' % (title, message.replace('\n', ' ')))
         n = pynotify.Notification(title, message, icon)
         n.show()
 
@@ -88,8 +89,8 @@ class GitHubApplet(object):
 class GitHubAppIndicator(GitHubApplet):
     def create_indicator(self):
         icon_file = get_icon_file_path('unknown')
-        logging.debug('Creating appindicator with default icon %s' % icon_file)
-        ind = appindicator.Indicator('github-indicator', icon_file,
+        logger.debug('Creating appindicator with default icon %s' % icon_file)
+        ind = appindicator.Indicator(APPNAME, icon_file,
                                      appindicator.CATEGORY_APPLICATION_STATUS)
         ind.set_status(appindicator.STATUS_ACTIVE)
         return ind
@@ -101,14 +102,14 @@ class GitHubAppIndicator(GitHubApplet):
         return menu
 
     def set_icon(self, icon):
-        logging.debug('Setting icon from file: %s' % icon)
+        logger.debug('Setting icon from file: %s' % icon)
         self.tray.set_icon(icon)
 
 
 class GitHubStatusIcon(GitHubApplet):
     def create_indicator(self):
         icon_file = get_icon_file_path(self.status)
-        logging.debug('Creating StatusIcon from file (%s)' % icon_file)
+        logger.debug('Creating StatusIcon from file (%s)' % icon_file)
         icon = gtk.status_icon_new_from_file(icon_file)
         if not icon.is_embedded():
             logging.error('Notification area not found for Status Icon version')
@@ -120,7 +121,7 @@ class GitHubStatusIcon(GitHubApplet):
         return men
 
     def set_icon(self, icon):
-        logging.debug('Setting icon from file: %s' % icon)
+        logger.debug('Setting icon from file: %s' % icon)
         self.tray.set_from_file(icon)
 
     def popup_menu_cb(self, widget, button, time):
@@ -131,9 +132,9 @@ class GitHubStatusIcon(GitHubApplet):
 
 def get_app(options):
     if options.status_icon:
-        logging.debug('Using StatusIcon version')
+        logger.debug('Using StatusIcon version')
         app = GitHubStatusIcon(options)
     else:
-        logging.debug('Using AppIndicator version')
+        logger.debug('Using AppIndicator version')
         app = GitHubAppIndicator(options)
     return app

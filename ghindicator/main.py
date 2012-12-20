@@ -8,6 +8,7 @@ License: Do whatever you want
 """
 
 import os
+import logging
 
 from ghindicator import options
 from ghindicator import gui
@@ -16,12 +17,15 @@ from ghindicator import log
 
 def run():
     (opts, args) = options.get_options()
-    logfile = os.path.join(options.CACHE_DIR, 'github-indicator.log')
-    log.setup('github-indicator', log_level=opts.log_level, 
+    logfile = os.path.join(options.CACHE_DIR, options.APPNAME + '.log')
+    log.setup(options.APPNAME, log_level=opts.log_level, 
               log_type='file', file_name=logfile)
-
+    logger = logging.getLogger(options.APPNAME)
+    logger.critical('Starting github-indicator')
     try:
         app = gui.get_app(opts)
         app.main()
     except KeyboardInterrupt:
         pass
+    logger.critical('Closing github-indicator')
+    log.shutdown()
