@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Script to start the github-notifier app
@@ -13,9 +12,12 @@ import logging
 from ghindicator import options
 from ghindicator import gui
 from ghindicator import log
+from ghindicator import updaters
 
 
 def run():
+    updaters.updater_003_01()
+
     (opts, args) = options.get_options()
     logfile = os.path.join(options.CACHE_DIR, options.APPNAME + '.log')
     log.setup(options.APPNAME, log_level=opts.log_level, 
