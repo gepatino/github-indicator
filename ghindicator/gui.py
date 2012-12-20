@@ -21,7 +21,6 @@ import logging
 logger = logging.getLogger(APPNAME)
 
 
-
 def get_icon_file_path(name):
     path = os.path.join(ICON_DIR, name + '.png')
     return path
@@ -54,7 +53,8 @@ class GitHubApplet(object):
         return menu
 
     def main(self):
-        gtk.timeout_add(500, self.update_display)
+        gtk.timeout_add(500, self.update_status)
+        gtk.timeout_add(500, self.update_events)
         gtk.main()
 
     def quit_cb(self, *args, **kwargs):
@@ -62,7 +62,7 @@ class GitHubApplet(object):
         sys.exit()
         raise KeyboardInterrupt
 
-    def update_display(self, *args, **kwargs):
+    def update_status(self, *args, **kwargs):
         status = self.monitor.check_status()
         if status is not None:
             title = 'GitHub service status is %s' % status['message']['status']
@@ -70,15 +70,16 @@ class GitHubApplet(object):
             icon = get_icon_file_path(status['message']['status'])
             self.set_icon(icon)
             self.notify(title, message, icon)
+        gtk.timeout_add(self.options.update_time * 1000, self.update_status)
 
+    def update_events(self, *args, **kwargs):
         events = self.monitor.check_events()
         for e in reversed(events):
             title = '%s - %s' % (e['created_at'], e['type'])
             message = '%s on %s' % (e['actor']['login'], e['repo']['name'])
             icon = self.monitor.get_user_icon(e['actor'])
             self.notify(title, message, icon)
-
-        gtk.timeout_add(self.options.update_time * 1000, self.update_display)
+        gtk.timeout_add(5 * 60 * 1000, self.update_events)
 
     def notify(self, title, message, icon):
         logger.debug('%s - %s' % (title, message.replace('\n', ' ')))
