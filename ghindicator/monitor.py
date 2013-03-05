@@ -10,6 +10,7 @@ import datetime
 import os
 import urllib2
 
+from ghindicator import language
 from ghindicator.api import GitHubAPI
 from ghindicator.options import CACHE_DIR
 
@@ -39,7 +40,7 @@ class GitHubMonitor(object):
                 except (urllib2.URLError, TypeError, ValueError):
                     msg = {
                         'status': 'unknown',
-                        'body': 'Cannot access GitHub API',
+                        'body': _('Cannot access GitHub API'),
                         'created_on': 'unknown'
                     }
                 return {'status': st, 'message': msg}
