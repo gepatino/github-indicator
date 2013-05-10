@@ -30,12 +30,13 @@ def get_icon_file_path(name):
 class GitHubApplet(object):
     def __init__(self, options):
         self.options = options
-        self.status = 'unknown'
         self.last_updated = None
         self.monitor = GitHubMonitor(options.username, options.password)
         self.tray = self.create_indicator()
+        self.status_menu = None
+        self.status_details_menu = None
         self.menu = self.create_menu()
-        self.past_events = []
+        self.last_events = []
 
         pynotify.init(APPNAME)
 
@@ -44,19 +45,36 @@ class GitHubApplet(object):
     def set_icon(self, icon): pass
 
     def create_menu(self):
-        menu = gtk.Menu()
-
-        # quit control
+        self.status_menu = gtk.MenuItem('Status: Unknown')
+        self.status_details_menu = gtk.MenuItem('')
+        item_events = gtk.MenuItem('Last events')
+        item_events.connect('activate', self.last_events_cb)
+        item_prefs = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
+        item_prefs.connect('activate', self.preferences_cb)
         item_quit = gtk.ImageMenuItem(gtk.STOCK_QUIT)
         item_quit.connect('activate', self.quit_cb)
-        menu.append(item_quit)
 
+        menu = gtk.Menu()
+        menu.append(self.status_menu)
+        menu.append(self.status_details_menu)
+        menu.append(gtk.SeparatorMenuItem())
+        menu.append(item_events)
+        menu.append(gtk.SeparatorMenuItem())
+        menu.append(item_prefs)
+        menu.append(gtk.SeparatorMenuItem())
+        menu.append(item_quit)
         return menu
 
     def main(self):
         gtk.timeout_add(500, self.update_status)
         gtk.timeout_add(500, self.update_events)
         gtk.main()
+
+    def last_events_cb(self, *args, **kwargs):
+        pass
+
+    def preferences_cb(self, *args, **kwargs):
+        pass
 
     def quit_cb(self, *args, **kwargs):
         gtk.main_quit()
@@ -71,16 +89,23 @@ class GitHubApplet(object):
             icon = get_icon_file_path(status['message']['status'])
             self.set_icon(icon)
             self.notify(title, message, icon)
+            self.status_menu.get_child().set_text(title)
+            self.status_details_menu.get_child().set_text(message)
         gtk.timeout_add(self.options.update_time * 1000, self.update_status)
 
     def update_events(self, *args, **kwargs):
         events = self.monitor.check_events()
+        update_menu = False
         for e in reversed(events):
+            update_menu = True
             title = _('%(created_at)s - %(type)s') % e
             data = {'actor': e['actor']['login'], 'object': e['repo']['name']}
             message = _('%(actor)s on %(object)s') % data
             icon = self.monitor.get_user_icon(e['actor'])
             self.notify(title, message, icon)
+            self.last_events.insert(e)
+        if update_menu:
+            self.last_events = self.last_events[:5]
         gtk.timeout_add(5 * 60 * 1000, self.update_events)
 
     def notify(self, title, message, icon):
@@ -111,7 +136,7 @@ class GitHubAppIndicator(GitHubApplet):
 
 class GitHubStatusIcon(GitHubApplet):
     def create_indicator(self):
-        icon_file = get_icon_file_path(self.status)
+        icon_file = get_icon_file_path('unknown')
         logger.debug(_('Creating StatusIcon from file (%s)') % icon_file)
         icon = gtk.status_icon_new_from_file(icon_file)
         if not icon.is_embedded():
