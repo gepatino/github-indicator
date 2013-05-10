@@ -8,6 +8,7 @@ License: Do whatever you want
 """
 
 import appindicator
+import dateutil.parser
 import gtk
 import os
 import pynotify
@@ -47,10 +48,11 @@ class GitHubApplet(object):
     def create_menu(self):
         self.status_menu = gtk.MenuItem('Status: Unknown')
         self.status_details_menu = gtk.MenuItem('')
-        item_events = gtk.MenuItem('Last events')
-        item_events.connect('activate', self.last_events_cb)
-        item_prefs = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
-        item_prefs.connect('activate', self.preferences_cb)
+
+        #item_events = gtk.MenuItem('Last events')
+        #item_events.connect('activate', self.last_events_cb)
+        #item_prefs = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
+        #item_prefs.connect('activate', self.preferences_cb)
         item_quit = gtk.ImageMenuItem(gtk.STOCK_QUIT)
         item_quit.connect('activate', self.quit_cb)
 
@@ -58,10 +60,10 @@ class GitHubApplet(object):
         menu.append(self.status_menu)
         menu.append(self.status_details_menu)
         menu.append(gtk.SeparatorMenuItem())
-        menu.append(item_events)
-        menu.append(gtk.SeparatorMenuItem())
-        menu.append(item_prefs)
-        menu.append(gtk.SeparatorMenuItem())
+        #menu.append(item_events)
+        #menu.append(gtk.SeparatorMenuItem())
+        #menu.append(item_prefs)
+        #menu.append(gtk.SeparatorMenuItem())
         menu.append(item_quit)
         return menu
 
@@ -84,14 +86,39 @@ class GitHubApplet(object):
     def update_status(self, *args, **kwargs):
         status = self.monitor.check_status()
         if status is not None:
-            title = _('GitHub service status is %(status)s') % status['message']
-            message = _('%(body)s\nOn %(created_on)s') % status['message']
-            icon = get_icon_file_path(status['message']['status'])
+            service_status = status['message']['status']
+            details = status['message']['body']
+            date = status['message']['created_on']
+            date = dateutil.parser.parse(date)
+            date = date.strftime('%Y-%M-%d %H:%M')
+
+            title = _('GitHub service status is %(status)s') % {'status': service_status}
+            message = _('%(created_on)s - %(body)s') % {'body': details, 'created_on': date}
+
+            icon = get_icon_file_path(service_status)
             self.set_icon(icon)
             self.notify(title, message, icon)
-            self.status_menu.get_child().set_text(title)
-            self.status_details_menu.get_child().set_text(message)
+            self._set_menu_status(title, message)
+
         gtk.timeout_add(self.options.update_time * 1000, self.update_status)
+
+    def _set_menu_status(self, title, message):
+        LINE_LENGTH = 50
+        if len(message) > LINE_LENGTH:
+            i = 0
+            parts = []
+            while i < len(message):
+                j = min(len(message), i + LINE_LENGTH)
+                if j < len(message):
+                    if message[j] != ' ':
+                        j = message.find(' ', j)
+                parts.append(message[i:j])
+                i = j
+            msg = '\n'.join(parts)
+        else:
+            msg = message
+        self.status_menu.get_child().set_text(title)
+        self.status_details_menu.get_child().set_text(msg)
 
     def update_events(self, *args, **kwargs):
         events = self.monitor.check_events()
