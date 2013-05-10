@@ -14,7 +14,7 @@ Install
 
 Run setup.py and optionally specify your app prefix:
 
-./setup.py install -prefix ~/local
+./setup.py install --prefix ~/local
 
 
 IRC Channel
