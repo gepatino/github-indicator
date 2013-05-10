@@ -11,6 +11,7 @@ import logging
 
 from ghindicator import options
 from ghindicator import gui
+from ghindicator import language
 from ghindicator import log
 from ghindicator import updaters
 
@@ -23,11 +24,11 @@ def run():
     log.setup(options.APPNAME, log_level=opts.log_level, 
               log_type='file', file_name=logfile)
     logger = logging.getLogger(options.APPNAME)
-    logger.critical('Starting github-indicator')
+    logger.critical(_('Starting github-indicator'))
     try:
         app = gui.get_app(opts)
         app.main()
     except KeyboardInterrupt:
         pass
-    logger.critical('Closing github-indicator')
+    logger.critical(_('Closing github-indicator'))
     log.shutdown()
